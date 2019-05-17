@@ -238,8 +238,8 @@ class CiteTrainer(UnsupervisedTrainer):
         loss = (
             torch.mean(
                 reconst_loss_umi + reconst_loss_adt + self.kl_weight * kl_divergence
-            ).item()
-            + (kl_divergence_back.item()) / n
+            )
+            + kl_divergence_back / n
         )
         return loss
 
