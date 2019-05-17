@@ -484,11 +484,12 @@ class VAECITE(nn.Module):
                 Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
                 Normal(self.b_mean, torch.sqrt(self.b_var)),
             ).sum()
-            library_log_prob = (
-                LogNormal(self.adt_mean_lib, self.adt_var_lib**0.5)
-                .log_prob(torch.exp(ql_m["adt"]))
-                .sum(dim=1)
-            )
+            # library_log_prob = (
+            #     LogNormal(self.adt_mean_lib, self.adt_var_lib**0.5)
+            #     .log_prob(torch.exp(ql_m["adt"]))
+            #     .sum(dim=1)
+            # )
+            library_log_prob = 0
             kl_divergence_l_adt = 0
         else:
             local_l_mean_adt = self.adt_mean_lib.device()
