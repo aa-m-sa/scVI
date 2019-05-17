@@ -381,7 +381,7 @@ class VAECITE(nn.Module):
             if self.model_background is True:
                 log_b = Normal(
                     self.log_b_mean, torch.exp(self.log_b_log_scale)
-                ).rsample(n_samples, qz_m.size(0))
+                ).rsample((n_samples, qz_m.size(0)))
 
         px_scale = {}
         px_r = {}
