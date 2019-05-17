@@ -348,7 +348,7 @@ class VAECITE(nn.Module):
         if self.model_background is True:
             # Background sample size (batch size by number of proteins samples)
             log_b = Normal(self.log_b_mean, torch.exp(self.log_b_log_scale)).rsample(
-                qz_m.size(0)
+                (qz_m.size(0), )
             )
 
         if n_samples > 1:
