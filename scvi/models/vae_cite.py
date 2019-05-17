@@ -317,7 +317,7 @@ class VAECITE(nn.Module):
         library = 4. * torch.ones_like(sample_batch[:, [0]])
         px_scale_umi, _, _, _ = self.umi_decoder('gene', z, library, batch_index)
         px_scale_adt, _, _, _ = self.adt_decoder('protein', z, library, batch_index)
-        px_scale = torch.concat((px_scale_umi, px_scale_adt), dim=-1)
+        px_scale = torch.cat((px_scale_umi, px_scale_adt), dim=-1)
         return px_scale
 
     def _reconstruction_loss(self, x, px_rate, px_r, px_dropout, px_scale):
