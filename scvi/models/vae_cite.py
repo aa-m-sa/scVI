@@ -352,6 +352,10 @@ class VAECITE(nn.Module):
             )
 
         if n_samples > 1:
+            if self.model_background is True:
+                log_b = Normal(
+                    self.log_b_mean, torch.exp(self.log_b_log_scale)
+                ).rsample((n_samples, qz_m.size(0)))
             qz_m = qz_m.unsqueeze(0).expand((n_samples, qz_m.size(0), qz_m.size(1)))
             qz_v = qz_v.unsqueeze(0).expand((n_samples, qz_v.size(0), qz_v.size(1)))
             z = Normal(qz_m, qz_v.sqrt()).sample()
@@ -378,10 +382,6 @@ class VAECITE(nn.Module):
                 .expand((n_samples, ql_v["adt"].size(0), ql_v["adt"].size(1)))
             )
             library_adt = Normal(ql_m["adt"], ql_v["adt"].sqrt()).sample()
-            if self.model_background is True:
-                log_b = Normal(
-                    self.log_b_mean, torch.exp(self.log_b_log_scale)
-                ).rsample((n_samples, qz_m.size(0)))
 
         px_scale = {}
         px_r = {}
@@ -406,7 +406,6 @@ class VAECITE(nn.Module):
                 ] = self.adt_decoder(
                     self.adt_dispersion, z, ql_m["adt"], batch_index, y
                 )
-                print(px_rate["adt"].shape, log_b.shape)
                 px_rate["adt"] += torch.exp(log_b)
             else:
                 px_scale["adt"], px_r["adt"], px_rate["adt"], px_dropout[
