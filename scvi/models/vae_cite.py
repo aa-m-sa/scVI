@@ -406,6 +406,7 @@ class VAECITE(nn.Module):
                 ] = self.adt_decoder(
                     self.adt_dispersion, z, ql_m["adt"], batch_index, y
                 )
+                print(px_rate["adt"].shape, log_b.shape)
                 px_rate["adt"] += torch.exp(log_b)
             else:
                 px_scale["adt"], px_r["adt"], px_rate["adt"], px_dropout[
