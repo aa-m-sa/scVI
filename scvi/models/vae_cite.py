@@ -107,7 +107,9 @@ class VAECITE(nn.Module):
 
         if model_background is True:
             self.log_b_mean = torch.nn.Parameter(torch.randn(self.n_input_proteins))
-            self.log_b_log_scale = torch.nn.Parameter(torch.randn(self.n_input_proteins))
+            self.log_b_log_scale = torch.nn.Parameter(
+                torch.randn(self.n_input_proteins)
+            )
 
             # self.b_encoder = Encoder(
             #     self.n_input_proteins,
@@ -345,7 +347,9 @@ class VAECITE(nn.Module):
 
         if self.model_background is True:
             # Background sample size (batch size by number of proteins samples)
-            log_b = Normal(self.log_b_mean, torch.exp(self.log_b_log_scale)).rsample(qz_m.size(0))
+            log_b = Normal(self.log_b_mean, torch.exp(self.log_b_log_scale)).rsample(
+                qz_m.size(0)
+            )
 
         if n_samples > 1:
             qz_m = qz_m.unsqueeze(0).expand((n_samples, qz_m.size(0), qz_m.size(1)))
@@ -375,8 +379,9 @@ class VAECITE(nn.Module):
             )
             library_adt = Normal(ql_m["adt"], ql_v["adt"].sqrt()).sample()
             if self.model_background is True:
-                log_b = Normal(self.log_b_mean, torch.exp(self.log_b_log_scale)).rsample(n_samples, qz_m.size(0))
-
+                log_b = Normal(
+                    self.log_b_mean, torch.exp(self.log_b_log_scale)
+                ).rsample(n_samples, qz_m.size(0))
 
         px_scale = {}
         px_r = {}
@@ -475,16 +480,13 @@ class VAECITE(nn.Module):
         ).sum(dim=1)
 
         if self.model_background is True:
-            background_log_prob = (
-                Normal(self.b_mean, torch.sqrt(self.b_var))
-                .log_prob(log_b)
-                .sum(dim=1)
-            )
+            kl_divergence_back = kl(
+                Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
+                Normal(self.b_mean, torch.sqrt(self.b_var)),
+            ).sum(dim=1)
             library_log_prob = (
-                LogNormal(
-                    self.adt_mean_lib, torch.sqrt(self.adt_var_lib)
-                )
-                .log_prob(torch.exp(ql_m["adt"]) + torch.exp(log_b).sum())
+                LogNormal(self.adt_mean_lib, torch.sqrt(self.adt_var_lib))
+                .log_prob(torch.exp(ql_m["adt"]))
                 .sum(dim=1)
             )
             kl_divergence_l_adt = 0
@@ -495,16 +497,14 @@ class VAECITE(nn.Module):
                 Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
                 Normal(local_l_mean_adt, torch.sqrt(local_l_var_adt)),
             ).sum(dim=1)
-            background_log_prob = 0
+            kl_divergence_back = 0
             library_log_prob = 0
 
         kl_divergence = kl_divergence_z
         return (
             reconst_loss_umi + kl_divergence_l_umi,
-            reconst_loss_adt
-            - background_log_prob
-            - library_log_prob
-            + kl_divergence_l_adt,
-            kl_divergence,
+            reconst_loss_adt + kl_divergence_l_adt,
+            kl_divergence - library_log_prob,
+            kl_divergence_back,
         )
 

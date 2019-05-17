@@ -6,27 +6,26 @@ import numpy as np
 from scvi.inference import Posterior
 from . import UnsupervisedTrainer
 
-plt.switch_backend('agg')
+plt.switch_backend("agg")
 
 
 class CitePosterior(Posterior):
-
     def ll_umi(self, verbose=False):
-        self.mode = 'umi'
+        self.mode = "umi"
         ll = self.compute_log_likelihood(self.model)
         if verbose:
             print("LL UMI: %.4f" % ll)
         return ll
 
     def ll_adt(self, verbose=False):
-        self.mode = 'adt'
+        self.mode = "adt"
         ll = self.compute_log_likelihood(self.model)
         if verbose:
             print("LL ADT: %.4f" % ll)
         return ll
 
     def ll(self, verbose=False):
-        self.mode = 'total'
+        self.mode = "total"
         ll = self.compute_log_likelihood(self.model)
         if verbose:
             print("LL UMI+ADT: %.4f" % ll)
@@ -56,12 +55,17 @@ class CitePosterior(Posterior):
         for i_batch, tensors in enumerate(self):
             # general fish case
             sample_batch, local_l_mean, local_l_var, batch_index, labels = tensors[:5]
-            reconst_loss_umi, reconst_loss_adt, kl_divergence = vae(sample_batch, local_l_mean,
-                                                                    local_l_var, batch_index=batch_index,
-                                                                    y=labels, **kwargs)
-            if self.mode == 'umi':
+            reconst_loss_umi, reconst_loss_adt, kl_divergence, kl_divergence_back = vae(
+                sample_batch,
+                local_l_mean,
+                local_l_var,
+                batch_index=batch_index,
+                y=labels,
+                **kwargs
+            )
+            if self.mode == "umi":
                 log_lkl += torch.sum(reconst_loss_umi).item()
-            elif self.mode == 'adt':
+            elif self.mode == "adt":
                 log_lkl += torch.sum(reconst_loss_adt).item()
             else:
                 reconst_loss = reconst_loss_umi + reconst_loss_adt
@@ -92,11 +96,11 @@ class CitePosterior(Posterior):
             sample_batch, local_l_mean, local_l_var, batch_index, labels = tensors[:5]
             # For loop could probably be removed through n_samples parameter
             for i in range(mc_samples):
-                means = vae.get_sample_rate(sample_batch, mode='adt')
-                var_disp = vae.get_sample_dispersion(sample_batch, mode='adt')
+                means = vae.get_sample_rate(sample_batch, mode="adt")
+                var_disp = vae.get_sample_dispersion(sample_batch, mode="adt")
 
                 # Parametrized as r, p
-                if vae.reconstruction_loss_adt == 'nb':
+                if vae.reconstruction_loss_adt == "nb":
                     r = var_disp
                     p = means / (means + var_disp)
                     odds = p / (1 - p)
@@ -107,7 +111,7 @@ class CitePosterior(Posterior):
                     else:
                         # samples += NegativeBinomial(total_count=var_disp, probs=means / (means + var_disp)).sample()
                         samples += torch.poisson(rate)
-                elif vae.reconstruction_loss_adt == 'poisson':
+                elif vae.reconstruction_loss_adt == "poisson":
                     if i == 0:
                         samples = Poisson(means).sample()
                     else:
@@ -122,14 +126,19 @@ class CitePosterior(Posterior):
             # Take average sample
             samples /= mc_samples
 
-            umi_ = sample_batch[:, :vae.n_input_genes]
-            reconst_loss_umi, reconst_loss_adt, kl_divergence = vae(torch.cat((umi_, samples), 1), local_l_mean,
-                                                                    local_l_var, batch_index=batch_index,
-                                                                    y=labels, **kwargs)
+            umi_ = sample_batch[:, : vae.n_input_genes]
+            reconst_loss_umi, reconst_loss_adt, kl_divergence = vae(
+                torch.cat((umi_, samples), 1),
+                local_l_mean,
+                local_l_var,
+                batch_index=batch_index,
+                y=labels,
+                **kwargs
+            )
             log_lkl += torch.sum(reconst_loss_adt).item()
 
-            adt_ = sample_batch[:, vae.n_input_genes:]
-            error = torch.sum((samples - adt_)**2, dim=0)
+            adt_ = sample_batch[:, vae.n_input_genes :]
+            error = torch.sum((samples - adt_) ** 2, dim=0)
             mse += error
 
             mae += torch.sum(torch.abs(samples - adt_), dim=0)
@@ -141,7 +150,7 @@ class CitePosterior(Posterior):
         return mse, mae, log_lkl
 
     @torch.no_grad()
-    def differential_expression_stats(self, M_sampling=100, mode='adt'):
+    def differential_expression_stats(self, M_sampling=100, mode="adt"):
         r"""
         Output average over statistics in a symmetric way (a against b)
         forget the sets if permutation is True
@@ -154,21 +163,29 @@ class CitePosterior(Posterior):
         px_scales = []
         all_labels = []
         # Reduce batch_size on GPU
-        batch_size = max(
-            self.data_loader_kwargs['batch_size'] // M_sampling, 2)
+        batch_size = max(self.data_loader_kwargs["batch_size"] // M_sampling, 2)
         for tensors in self.update({"batch_size": batch_size}):
             sample_batch, _, _, batch_index, labels = tensors
             px_scales += [
-                np.array((self.model.get_sample_scale(
-                    sample_batch, batch_index=batch_index, y=labels, n_samples=M_sampling, mode=mode)
-                ).cpu())]
+                np.array(
+                    (
+                        self.model.get_sample_scale(
+                            sample_batch,
+                            batch_index=batch_index,
+                            y=labels,
+                            n_samples=M_sampling,
+                            mode=mode,
+                        )
+                    ).cpu()
+                )
+            ]
 
             # Align the sampling
             if M_sampling > 1:
-                px_scales[-1] = (px_scales[-1].transpose((1, 0, 2))
-                                 ).reshape(-1, px_scales[-1].shape[-1])
-            all_labels += [np.array((labels.repeat(1,
-                                                   M_sampling).view(-1, 1)).cpu())]
+                px_scales[-1] = (px_scales[-1].transpose((1, 0, 2))).reshape(
+                    -1, px_scales[-1].shape[-1]
+                )
+            all_labels += [np.array((labels.repeat(1, M_sampling).view(-1, 1)).cpu())]
 
         px_scales = np.concatenate(px_scales)
         # this will be used as boolean
@@ -195,25 +212,39 @@ class CiteTrainer(UnsupervisedTrainer):
         >>> infer = VariationalInference(gene_dataset, vae, train_size=0.5)
         >>> infer.train(n_epochs=20, lr=1e-3)
     """
-    default_metrics_to_monitor = ['ll_umi', 'll_adt']
+    default_metrics_to_monitor = ["ll_umi", "ll_adt"]
 
-    def __init__(self, model, gene_dataset, train_size=0.8, test_size=None, kl=None, **kwargs):
-        super().__init__(model, gene_dataset,
-                                          train_size=0.8, test_size=None, kl=None, **kwargs)
+    def __init__(
+        self, model, gene_dataset, train_size=0.8, test_size=None, kl=None, **kwargs
+    ):
+        super().__init__(
+            model, gene_dataset, train_size=0.8, test_size=None, kl=None, **kwargs
+        )
         self.kl = kl
         if type(self) is CiteTrainer:
             self.train_set, self.test_set = self.train_test(
-                model, gene_dataset, train_size, test_size, type_class=CitePosterior)
-            self.train_set.to_monitor = ['ll_umi', 'll_adt']
-            self.test_set.to_monitor = ['ll_umi', 'll_adt']
+                model, gene_dataset, train_size, test_size, type_class=CitePosterior
+            )
+            self.train_set.to_monitor = ["ll_umi", "ll_adt"]
+            self.test_set.to_monitor = ["ll_umi", "ll_adt"]
 
     def loss(self, tensors):
         sample_batch, local_l_mean, local_l_var, batch_index, _ = tensors
-        reconst_loss_umi, reconst_loss_adt, kl_divergence = self.model(
-            sample_batch, local_l_mean, local_l_var, batch_index)
-        loss = torch.mean(reconst_loss_umi + reconst_loss_adt +
-                          self.kl_weight * kl_divergence)
+        reconst_loss_umi, reconst_loss_adt, kl_divergence, kl_divergence_back = self.model(
+            sample_batch, local_l_mean, local_l_var, batch_index
+        )
+        # global latent variables are 1/n of non-global
+        n = len(self.train_set.indices)
+        loss = (
+            torch.mean(
+                reconst_loss_umi + reconst_loss_adt + self.kl_weight * kl_divergence
+            )
+            + kl_divergence_back / n
+        )
         return loss
 
     def on_epoch_begin(self):
-        self.kl_weight = self.kl if self.kl is not None else min(1, self.epoch / 25)  # self.n_epochs)
+        self.kl_weight = (
+            self.kl if self.kl is not None else min(1, self.epoch / 25)
+        )  # self.n_epochs)
+
