@@ -483,7 +483,7 @@ class VAECITE(nn.Module):
             kl_divergence_back = kl(
                 Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
                 Normal(self.b_mean, torch.sqrt(self.b_var)),
-            ).sum(dim=1)
+            ).sum()
             library_log_prob = (
                 LogNormal(self.adt_mean_lib, self.adt_var_lib**0.5)
                 .log_prob(torch.exp(ql_m["adt"]))
