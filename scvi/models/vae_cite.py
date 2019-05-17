@@ -275,7 +275,7 @@ class VAECITE(nn.Module):
         :rtype: :py:class:`torch.Tensor`
         """
         px_scale = self.inference(x, batch_index=batch_index, y=y, n_samples=n_samples)[0]
-        px_scale = torch.concat((px_scale['umi'], px_scale['adt']), dim=-1)
+        px_scale = torch.cat((px_scale['umi'], px_scale['adt']), dim=-1)
         return px_scale
 
     def get_sample_rate(self, x, batch_index=None, y=None, n_samples=1):
@@ -290,7 +290,7 @@ class VAECITE(nn.Module):
         :rtype: :py:class:`torch.Tensor`
         """
         px_rate = self.inference(x, batch_index=batch_index, y=y, n_samples=n_samples)[2]
-        px_rate = torch.concat((px_rate['umi'], px_rate['adt']), dim=-1)
+        px_rate = torch.cat((px_rate['umi'], px_rate['adt']), dim=-1)
         return px_rate
 
     def get_sample_dispersion(
