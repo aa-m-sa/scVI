@@ -262,7 +262,7 @@ class VAECITE(nn.Module):
         ql_m, ql_v, library = self.l_adt_encoder(x)
         return library
 
-    def get_sample_scale(self, x, batch_index=None, y=None, n_samples=1, mode="umi"):
+    def get_sample_scale(self, x, batch_index=None, y=None, n_samples=1):
         r"""Returns the tensor of predicted frequencies of expression for RNA/Proteins
             For log_normal ADT loss, this is the library size normalized mean
 
@@ -274,11 +274,11 @@ class VAECITE(nn.Module):
         :return: tensor of predicted frequencies of expression with shape ``(batch_size, n_input)``
         :rtype: :py:class:`torch.Tensor`
         """
-        return self.inference(x, batch_index=batch_index, y=y, n_samples=n_samples)[0][
-            mode
-        ]
+        px_scale = self.inference(x, batch_index=batch_index, y=y, n_samples=n_samples)[0]
+        px_scale = torch.concat((px_scale['umi'], px_scale['adt']), dim=-1)
+        return px_scale
 
-    def get_sample_rate(self, x, batch_index=None, y=None, n_samples=1, mode="umi"):
+    def get_sample_rate(self, x, batch_index=None, y=None, n_samples=1):
         r"""Returns the tensor of means of the negative binomial distribution
 
         :param x: tensor of values with shape ``(batch_size, n_input_genes/n_input_proteins)``
@@ -289,9 +289,9 @@ class VAECITE(nn.Module):
         :return: tensor of means of the negative binomial distribution with shape ``(batch_size, n_input)``
         :rtype: :py:class:`torch.Tensor`
         """
-        return self.inference(x, batch_index=batch_index, y=y, n_samples=n_samples)[2][
-            mode
-        ]
+        px_rate = self.inference(x, batch_index=batch_index, y=y, n_samples=n_samples)[2]
+        px_rate = torch.concat((px_rate['umi'], px_rate['adt']), dim=-1)
+        return px_rate
 
     def get_sample_dispersion(
         self, x, batch_index=None, y=None, n_samples=1, mode="adt"
