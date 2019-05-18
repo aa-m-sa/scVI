@@ -492,7 +492,7 @@ class VAECITE(nn.Module):
 
         if self.model_background is True:
             kl_divergence_back = kl(
-                Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
+                Normal(self.log_b_mean, torch.exp(self.log_b_log_scale)),
                 Normal(self.b_mean, torch.sqrt(self.b_var)),
             ).sum()
             # library_log_prob = (
