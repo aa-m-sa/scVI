@@ -507,7 +507,7 @@ class VAECITE(nn.Module):
             local_l_var_adt = self.adt_var_lib
             kl_divergence_l_adt = kl(
                 Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
-                Normal(local_l_mean_adt, torch.sqrt(local_l_var_adt)),
+                Normal(local_l_mean_adt, local_l_var_adt**0.5),
             ).sum(dim=1)
             kl_divergence_back = 0
             library_log_prob = 0
