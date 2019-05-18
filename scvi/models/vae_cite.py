@@ -503,8 +503,8 @@ class VAECITE(nn.Module):
             library_log_prob = 0
             kl_divergence_l_adt = 0
         else:
-            local_l_mean_adt = self.adt_mean_lib.device()
-            local_l_var_adt = self.adt_var_lib.device()
+            local_l_mean_adt = self.adt_mean_lib
+            local_l_var_adt = self.adt_var_lib
             kl_divergence_l_adt = kl(
                 Normal(ql_m["adt"], torch.sqrt(ql_v["adt"])),
                 Normal(local_l_mean_adt, torch.sqrt(local_l_var_adt)),
