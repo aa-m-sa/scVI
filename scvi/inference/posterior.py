@@ -291,7 +291,7 @@ class Posterior:
             if np.sum(idx1) > min_cells and np.sum(idx2) > min_cells:
                 de_cluster.append(x)
                 res = self.differential_expression_score(idx1=idx1, idx2=idx2, M_permutation=M_permutation,
-                                                         n_samples=n_samples, sample_pairs=False)
+                                                         n_samples=n_samples, sample_pairs=True)
                 res['clusters'] = np.repeat(x, len(res.index))
                 de_res.append(res)
         if output_file:  # store as an excel spreadsheet
