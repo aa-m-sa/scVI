@@ -152,7 +152,7 @@ class Dataset10X(GeneExpressionDataset):
         protein_inds = []
         gene_inds = []
         for i, name in enumerate(gene_names):
-            if "ADT" in name or "TotalSeq" in name:
+            if "TotalSeq" in name:
                 protein_inds.append(i)
             else:
                 gene_inds.append(i)
