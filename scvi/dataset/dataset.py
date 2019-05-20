@@ -323,8 +323,9 @@ class GeneExpressionDataset(Dataset):
         return X, local_mean, local_var, batch_indices, labels
 
     @staticmethod
-    def get_attributes_from_totalseq_matrix(X, protein_indexes, gene_indexes, batch_indices=0, labels=None):
+    def get_attributes_from_totalseq_matrix(X, protein_indexes, batch_indices=0, labels=None):
 
+        gene_indexes = np.setdiff1d(np.arange(X.shape[1]), protein_indexes)
         ne_cells = np.logical_or(X[:, gene_indexes].sum(axis=1) > 0, X[:, protein_indexes].sum(axis=1) > 0)
         to_keep = np.where(ne_cells)[0]
         if not ne_cells.all():

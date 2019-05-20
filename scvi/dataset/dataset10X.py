@@ -113,7 +113,7 @@ class Dataset10X(GeneExpressionDataset):
         expression_data, gene_names, protein_inds = self.download_and_preprocess()
         if protein_inds is not None:
             super().__init__(*GeneExpressionDataset.get_attributes_from_totalseq_matrix(
-                expression_data), gene_names=gene_names, protein_inds=protein_inds)
+                expression_data, protein_inds), gene_names=gene_names, protein_inds=protein_inds)
         else:
             super().__init__(*GeneExpressionDataset.get_attributes_from_matrix(
                 expression_data), gene_names=gene_names, protein_inds=protein_inds)
