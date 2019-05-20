@@ -110,9 +110,13 @@ class Dataset10X(GeneExpressionDataset):
 
         self.dense = dense
 
-        expression_data, gene_names = self.download_and_preprocess()
-        super().__init__(*GeneExpressionDataset.get_attributes_from_matrix(
-            expression_data), gene_names=gene_names)
+        expression_data, gene_names, protein_inds = self.download_and_preprocess()
+        if protein_inds is not None:
+            super().__init__(*GeneExpressionDataset.get_attributes_from_totalseq_matrix(
+                expression_data), gene_names=gene_names, protein_inds=protein_inds)
+        else:
+            super().__init__(*GeneExpressionDataset.get_attributes_from_matrix(
+                expression_data), gene_names=gene_names, protein_inds=protein_inds)
 
     def preprocess(self):
         print("Preprocessing dataset")
@@ -144,8 +148,19 @@ class Dataset10X(GeneExpressionDataset):
         else:
             expression_data = csr_matrix(expression_data)
 
+        # Check if TotalSeq dataset
+        protein_inds = []
+        gene_inds = []
+        for i, name in enumerate(gene_names):
+            if "ADT" in name or "TotalSeq" in name:
+                protein_inds.append(i)
+            else:
+                gene_inds.append(i)
+        if len(protein_inds) == 0:
+            protein_inds = None
+
         print("Finished preprocessing dataset")
-        return expression_data, gene_names
+        return expression_data, gene_names, protein_inds
 
     @staticmethod
     def find_exact_path(dir_path):

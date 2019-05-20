@@ -21,13 +21,14 @@ class GeneExpressionDataset(Dataset):
     """
 
     def __init__(self, X, local_means, local_vars, batch_indices, labels,
-                 gene_names=None, cell_types=None, x_coord=None, y_coord=None):
+                 gene_names=None, cell_types=None, x_coord=None, y_coord=None, protein_inds=None):
         # Args:
         # Xs: a list of numpy tensors with .shape[1] identical (total_size*nb_genes)
         # or a list of scipy CSR sparse matrix,
         # or transposed CSC sparse matrix (the argument sparse must then be set to true)
         self.dense = type(X) is np.ndarray
         self._X = np.ascontiguousarray(X, dtype=np.float32) if self.dense else X
+        self.protein_inds = protein_inds
         self.nb_genes = self.X.shape[1]
         self.local_means = local_means
         self.local_vars = local_vars
@@ -42,6 +43,8 @@ class GeneExpressionDataset(Dataset):
         if cell_types is not None:
             assert self.n_labels == len(cell_types)
             self.cell_types = np.array(cell_types, dtype=np.str)
+        if protein_inds is not None:
+            self.nb_genes -= len(protein_inds)
 
     def preprocess(self):
         raise NotImplementedError
@@ -314,6 +317,23 @@ class GeneExpressionDataset(Dataset):
                   "in the expression matrix were:")
             print(removed_idx)
         local_mean, local_var = GeneExpressionDataset.library_size(X)
+        batch_indices = batch_indices * np.ones((X.shape[0], 1)) if type(batch_indices) is int \
+            else batch_indices[to_keep]
+        labels = labels[to_keep].reshape(-1, 1) if labels is not None else np.zeros_like(batch_indices)
+        return X, local_mean, local_var, batch_indices, labels
+
+    @staticmethod
+    def get_attributes_from_totalseq_matrix(X, protein_indexes, gene_indexes, batch_indices=0, labels=None):
+
+        ne_cells = np.logical_or(X[:, gene_indexes].sum(axis=1) > 0, X[:, protein_indexes].sum(axis=1) > 0)
+        to_keep = np.where(ne_cells)[0]
+        if not ne_cells.all():
+            X = X[to_keep]
+            removed_idx = np.where(~ne_cells)[0]
+            print("Cells with zero expression in all genes considered were removed, the indices of the removed cells "
+                  "in the expression matrix were:")
+            print(removed_idx)
+        local_mean, local_var = GeneExpressionDataset.library_size(X[:, gene_indexes])
         batch_indices = batch_indices * np.ones((X.shape[0], 1)) if type(batch_indices) is int \
             else batch_indices[to_keep]
         labels = labels[to_keep].reshape(-1, 1) if labels is not None else np.zeros_like(batch_indices)
