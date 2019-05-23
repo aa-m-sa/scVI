@@ -529,7 +529,7 @@ class Posterior:
             return asw_score, nmi_score, ari_score, uca_score
 
     @torch.no_grad()
-    def nn_overlap_score(self, verbose=True, **kwargs, sample=False):
+    def nn_overlap_score(self, verbose=True, sample=False, **kwargs):
         '''
         Quantify how much the similarity between cells in the mRNA latent space resembles their similarity at the
         protein level. Compute the overlap fold enrichment between the protein and mRNA-based cell 100-nearest neighbor
