@@ -158,9 +158,9 @@ class Posterior:
         return np.array(torch.cat(latent)), np.array(torch.cat(batch_indices)), np.array(torch.cat(labels)).ravel()
 
     @torch.no_grad()
-    def entropy_batch_mixing(self, verbose=False, **kwargs):
+    def entropy_batch_mixing(self, verbose=False, sample=False, **kwargs):
         if self.gene_dataset.n_batches == 2:
-            latent, batch_indices, labels = self.get_latent()
+            latent, batch_indices, labels = self.get_latent(sample=sample)
             be_score = entropy_batch_mixing(latent, batch_indices, **kwargs)
             if verbose:
                 print("Entropy batch mixing :", be_score)
