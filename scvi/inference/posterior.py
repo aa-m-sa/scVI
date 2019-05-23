@@ -529,14 +529,14 @@ class Posterior:
             return asw_score, nmi_score, ari_score, uca_score
 
     @torch.no_grad()
-    def nn_overlap_score(self, verbose=True, **kwargs):
+    def nn_overlap_score(self, verbose=True, **kwargs, sample=False):
         '''
         Quantify how much the similarity between cells in the mRNA latent space resembles their similarity at the
         protein level. Compute the overlap fold enrichment between the protein and mRNA-based cell 100-nearest neighbor
         graph and the Spearman correlation of the adjacency matrices.
         '''
         if hasattr(self.gene_dataset, 'adt_expression_clr'):
-            latent, _, _ = self.sequential().get_latent()
+            latent, _, _ = self.sequential().get_latent(sample=sample)
             protein_data = self.gene_dataset.adt_expression_clr[self.indices]
             spearman_correlation, fold_enrichment = nn_overlap(latent, protein_data, **kwargs)
             if verbose:
