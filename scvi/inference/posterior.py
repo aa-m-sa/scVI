@@ -509,9 +509,9 @@ class Posterior:
     knn_purity.mode = 'max'
 
     @torch.no_grad()
-    def clustering_scores(self, verbose=True, prediction_algorithm='knn'):
+    def clustering_scores(self, verbose=True, prediction_algorithm='knn', sample=False):
         if self.gene_dataset.n_labels > 1:
-            latent, _, labels = self.get_latent()
+            latent, _, labels = self.get_latent(sample=sample)
             if prediction_algorithm == 'knn':
                 labels_pred = KMeans(self.gene_dataset.n_labels, n_init=200).fit_predict(latent)  # n_jobs>1 ?
             elif prediction_algorithm == 'gmm':
