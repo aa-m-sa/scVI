@@ -546,10 +546,10 @@ class Posterior:
 
     @torch.no_grad()
     def show_t_sne(self, n_samples=1000, color_by='', save_name='', latent=None, batch_indices=None,
-                   labels=None, n_batch=None):
+                   labels=None, n_batch=None, sample=True):
         # If no latent representation is given
         if latent is None:
-            latent, batch_indices, labels = self.get_latent(sample=True)
+            latent, batch_indices, labels = self.get_latent(sample=sample)
             latent, idx_t_sne = self.apply_t_sne(latent, n_samples)
             batch_indices = batch_indices[idx_t_sne].ravel()
             labels = labels[idx_t_sne].ravel()
